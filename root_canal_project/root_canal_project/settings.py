@@ -79,8 +79,16 @@ WSGI_APPLICATION = 'root_canal_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'tooth',
+        'USER': 'root',
+        'PASSWORD': 'root_3306',
+        'HOST': 'bj-cynosdbmysql-grp-g1wkl460.sql.tencentcdb.com',
+        'PORT': '25708',
+        "ATOMIC_REQUESTS": True,
+        'OPTIONS': {
+            'charset': 'utf8',  # 使用 utf8mb4 编码
+        },
     }
 }
 
