@@ -24,4 +24,9 @@ class Slices(Model):
     slices_position = CharField(max_length=100, null=True)
     result = CharField(max_length=100, null=True)
 
+
+class InviteCode(Model):
+    code_id = AutoField(primary_key=True)
+    content = CharField(max_length=100, null=True)
+    expire_time = DateTimeField(null=True, default=None)
 # Create your models here.
