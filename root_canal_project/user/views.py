@@ -37,6 +37,10 @@ def login(request):
             "patient_id": patient.patient_id,
             "patient_name": patient.patient_name,
             "is_data_upload": patient.is_data_upload,
+            "left_lower_upload": patient.left_lower_upload,
+            "right_lower_upload": patient.right_lower_upload,
+            "left_upper_upload": patient.left_upper_upload,
+            "right_upper_upload": patient.right_upper_upload,
             "description": patient.description
         }
         patients_info.append(patient_info)
@@ -82,6 +86,12 @@ def register(request):
     phone = data.get('phone')
     mail = data.get('mail')
     password = data.get('password')
+    if phone != "" and Doctor.objects.filter(doctor_phone=phone).exists():
+        return JsonResponse({'msg': "当前电话号码已注册"})
+    if mail != "" and Doctor.objects.filter(doctor_mail=mail).exists():
+        return JsonResponse({'msg': "当前电子邮箱已注册"})
+    if phone == "" and mail == "":
+        return JsonResponse({'msg': "至少需要输入电话号码与电子邮箱中的一个"})
     new_doctor = Doctor.objects.create(doctor_name=name, doctor_phone=phone, doctor_mail=mail, doctor_password=password)
     new_doctor.save()
     return JsonResponse({'msg': "注册成功", 'doctor_id': new_doctor.doctor_id})
@@ -98,6 +108,111 @@ def add_doctor(request):
     phone = data.get('phone')
     mail = data.get('mail')
     password = data.get('password')
+    if phone != "" and Doctor.objects.filter(doctor_phone=phone).exists():
+        return JsonResponse({'msg': "当前电话号码已注册"})
+    if mail != "" and Doctor.objects.filter(doctor_mail=mail).exists():
+        return JsonResponse({'msg': "当前电子邮箱已注册"})
+    if phone == "" and mail == "":
+        return JsonResponse({'msg': "至少需要输入电话号码与电子邮箱中的一个"})
     new_doctor = Doctor.objects.create(doctor_name=name, doctor_phone=phone, doctor_mail=mail, doctor_password=password)
     new_doctor.save()
     return JsonResponse({'msg': "添加医生成功", 'doctor_id': new_doctor.doctor_id})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def get_all_doctors(request):
+    doctors = Doctor.objects.all()
+    doctors_info = []
+    for doctor in doctors:
+        doctor_info = {
+            "doctor_id": doctor.doctor_id,
+            "doctor_name": doctor.doctor_name,
+            "doctor_is_admin": doctor.is_admin,
+            "doctor_phone": doctor.doctor_phone,
+            "doctor_mail": doctor.doctor_mail,
+        }
+        doctors_info.append(doctor_info)
+    return JsonResponse({'doctors_info': doctors_info})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def make_doctor_admin(request):
+    data = json.loads(request.body)
+    doctor_is_admin = data.get('is_admin')
+    if not doctor_is_admin:
+        return JsonResponse({'msg': "您不是管理员"})
+    doctor_id = data.get('doctor_id')
+    doctor = Doctor.objects.get(doctor_id=doctor_id)
+    doctor.is_admin = True
+    doctor.save()
+    return JsonResponse({'msg': f"修改{doctor.doctor_name}为管理员成功"})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def create_patient(request):
+    data = json.loads(request.body)
+    doctor_id = data.get('doctor_id')
+    doctor = Doctor.objects.get(doctor_id=doctor_id)
+    patient_name = data.get('patient_name')
+    patient_description = data.get('patient_description')
+    new_patient = Patient.objects.create(patient_name=patient_name, description=patient_description)
+    new_patient.save()
+    doctor.special_treat_patients.add(new_patient)
+    return JsonResponse({'msg': f"已向{doctor.doctor_name}医生的病人列表添加{new_patient.patient_name}病人"})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def delete_patient(request):
+    data = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    patient = Patient.objects.get(patient_id=patient_id)
+    name = patient.patient_name
+    patient.delete()
+    return JsonResponse({'msg': f"删除病人{name}成功"})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def get_all_patient(request):
+    patients = Patient.objects.all()
+    patients_info = []
+    for patient in patients:
+        patient_info = {
+            "patient_id": patient.patient_id,
+            "patient_name": patient.patient_name,
+            "description": patient.description,
+            "left_lower_upload": patient.left_lower_upload,
+            "right_lower_upload": patient.right_lower_upload,
+            "left_upper_upload": patient.left_upper_upload,
+            "right_upper_upload": patient.right_upper_upload,
+            "is_upload": patient.is_data_upload
+        }
+        patients_info.append(patient_info)
+    return JsonResponse({'patients_info': patients_info})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def get_patient_of_doctor(request):
+    data = json.loads(request.body)
+    doctor_id = data.get('doctor_id')
+    doctor = Doctor.objects.get(doctor_id=doctor_id)
+    patients = doctor.special_treat_patients.all()
+    patients_info = []
+    for patient in patients:
+        patient_info = {
+            "patient_id": patient.patient_id,
+            "patient_name": patient.patient_name,
+            "description": patient.description,
+            "left_lower_upload": patient.left_lower_upload,
+            "right_lower_upload": patient.right_lower_upload,
+            "left_upper_upload": patient.left_upper_upload,
+            "right_upper_upload": patient.right_upper_upload,
+            "is_upload": patient.is_data_upload
+        }
+        patients_info.append(patient_info)
+    return JsonResponse({'patients_info': patients_info})
