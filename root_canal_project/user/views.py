@@ -1,10 +1,17 @@
+import base64
 import json
+import os
+import shutil
+
 from django.utils.timezone import now
 from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http.response import JsonResponse
 from django.core.management.utils import get_random_secret_key
+from django.core.files.storage import FileSystemStorage
+
+from root_canal_project import settings
 from .models import *
 
 
@@ -216,3 +223,50 @@ def get_patient_of_doctor(request):
         }
         patients_info.append(patient_info)
     return JsonResponse({'patients_info': patients_info})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def upload_slices(request):
+    files = request.FILES.getlist('files')
+    patient_id = request.POST.get('patient_id')
+    position = request.POST.get('position')
+    patient = Patient.objects.get(patient_id=patient_id)
+    new_slices = Slices.objects.create(slices_position=position)
+    if position == 'left_lower':
+        if patient.left_lower_upload:
+            old_source = patient.teeth_slices.all().filter(slices_position='left_lower')
+            old_source.all().delete()
+        else:
+            patient.left_lower_upload = True
+    elif position == 'left_upper':
+        if patient.left_upper_upload:
+            old_source = patient.teeth_slices.all().filter(slices_position='left_upper')
+            old_source.all().delete()
+        else:
+            patient.left_upper_upload = True
+    elif position == 'right_lower':
+        if patient.right_lower_upload:
+            old_source = patient.teeth_slices.all().filter(slices_position='right_lower')
+            old_source.all().delete()
+        else:
+            patient.right_lower_upload = True
+    else:
+        if patient.right_upper_upload:
+            old_source = patient.teeth_slices.all().filter(slices_position='right_upper')
+            old_source.all().delete()
+        else:
+            patient.right_upper_upload = True
+    if patient.left_lower_upload and patient.left_upper_upload and \
+            patient.right_lower_upload and patient.right_upper_upload:
+        patient.is_data_upload = True
+    new_slices.save()
+    patient.teeth_slices.add(new_slices)
+    patient.save()
+    fs = FileSystemStorage(location=settings.MEDIA_ROOT)
+    subdir = os.path.join(settings.MEDIA_ROOT, patient_id, position)
+    shutil.rmtree(subdir, ignore_errors=True)
+    os.makedirs(subdir, exist_ok=True)
+    for file in files:
+        fs.save(os.path.join(subdir, file.name), file)
+    return JsonResponse({'msg': f"{len(files)}个{position}位置的文件成功上传至病人{patient.patient_name}的资源库中"})
