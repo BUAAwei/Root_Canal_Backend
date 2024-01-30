@@ -10,6 +10,7 @@ from django.views.decorators.http import require_http_methods
 from django.http.response import JsonResponse
 from django.core.management.utils import get_random_secret_key
 from django.core.files.storage import FileSystemStorage
+from django.http import HttpResponse
 
 from root_canal_project import settings
 from .models import *
@@ -270,3 +271,16 @@ def upload_slices(request):
     for file in files:
         fs.save(os.path.join(subdir, file.name), file)
     return JsonResponse({'msg': f"{len(files)}个{position}位置的文件成功上传至病人{patient.patient_name}的资源库中"})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def download_stl(request):
+    data = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    position = data.get('position')
+    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/{position}/output.stl')
+    with open(file_path, 'rb') as file:
+        response = HttpResponse(file.read(), content_type='application/stl')
+        response['Content-Disposition'] = 'attachment; filename="output.stl"'
+        return response
