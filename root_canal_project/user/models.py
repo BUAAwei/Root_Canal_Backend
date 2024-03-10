@@ -15,10 +15,6 @@ class Patient(Model):
     patient_id = AutoField(primary_key=True)
     patient_name = CharField(max_length=100, null=True)
     description = CharField(max_length=100, null=True)
-    left_lower_upload = BooleanField(default=False)
-    right_lower_upload = BooleanField(default=False)
-    left_upper_upload = BooleanField(default=False)
-    right_upper_upload = BooleanField(default=False)
     is_data_upload = BooleanField(default=False)
     teeth_slices = ManyToManyField('Slices')
 

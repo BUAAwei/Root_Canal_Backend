@@ -45,10 +45,10 @@ def login(request):
             "patient_id": patient.patient_id,
             "patient_name": patient.patient_name,
             "is_data_upload": patient.is_data_upload,
-            "left_lower_upload": patient.left_lower_upload,
-            "right_lower_upload": patient.right_lower_upload,
-            "left_upper_upload": patient.left_upper_upload,
-            "right_upper_upload": patient.right_upper_upload,
+            # "left_lower_upload": patient.left_lower_upload,
+            # "right_lower_upload": patient.right_lower_upload,
+            # "left_upper_upload": patient.left_upper_upload,
+            # "right_upper_upload": patient.right_upper_upload,
             "description": patient.description
         }
         patients_info.append(patient_info)
@@ -193,10 +193,10 @@ def get_all_patient(request):
             "patient_id": patient.patient_id,
             "patient_name": patient.patient_name,
             "description": patient.description,
-            "left_lower_upload": patient.left_lower_upload,
-            "right_lower_upload": patient.right_lower_upload,
-            "left_upper_upload": patient.left_upper_upload,
-            "right_upper_upload": patient.right_upper_upload,
+            # "left_lower_upload": patient.left_lower_upload,
+            # "right_lower_upload": patient.right_lower_upload,
+            # "left_upper_upload": patient.left_upper_upload,
+            # "right_upper_upload": patient.right_upper_upload,
             "is_upload": patient.is_data_upload
         }
         patients_info.append(patient_info)
@@ -216,10 +216,10 @@ def get_patient_of_doctor(request):
             "patient_id": patient.patient_id,
             "patient_name": patient.patient_name,
             "description": patient.description,
-            "left_lower_upload": patient.left_lower_upload,
-            "right_lower_upload": patient.right_lower_upload,
-            "left_upper_upload": patient.left_upper_upload,
-            "right_upper_upload": patient.right_upper_upload,
+            # "left_lower_upload": patient.left_lower_upload,
+            # "right_lower_upload": patient.right_lower_upload,
+            # "left_upper_upload": patient.left_upper_upload,
+            # "right_upper_upload": patient.right_upper_upload,
             "is_upload": patient.is_data_upload
         }
         patients_info.append(patient_info)
@@ -234,38 +234,42 @@ def upload_slices(request):
     position = request.POST.get('position')
     patient = Patient.objects.get(patient_id=patient_id)
     new_slices = Slices.objects.create(slices_position=position)
-    if position == 'left_lower':
-        if patient.left_lower_upload:
-            old_source = patient.teeth_slices.all().filter(slices_position='left_lower')
-            old_source.all().delete()
-        else:
-            patient.left_lower_upload = True
-    elif position == 'left_upper':
-        if patient.left_upper_upload:
-            old_source = patient.teeth_slices.all().filter(slices_position='left_upper')
-            old_source.all().delete()
-        else:
-            patient.left_upper_upload = True
-    elif position == 'right_lower':
-        if patient.right_lower_upload:
-            old_source = patient.teeth_slices.all().filter(slices_position='right_lower')
-            old_source.all().delete()
-        else:
-            patient.right_lower_upload = True
+    if patient.is_data_upload:
+        patient.teeth_slices.all().delete()
     else:
-        if patient.right_upper_upload:
-            old_source = patient.teeth_slices.all().filter(slices_position='right_upper')
-            old_source.all().delete()
-        else:
-            patient.right_upper_upload = True
-    if patient.left_lower_upload and patient.left_upper_upload and \
-            patient.right_lower_upload and patient.right_upper_upload:
         patient.is_data_upload = True
+    # if position == 'left_lower':
+    #     if patient.left_lower_upload:
+    #         old_source = patient.teeth_slices.all().filter(slices_position='left_lower')
+    #         old_source.all().delete()
+    #     else:
+    #         patient.left_lower_upload = True
+    # elif position == 'left_upper':
+    #     if patient.left_upper_upload:
+    #         old_source = patient.teeth_slices.all().filter(slices_position='left_upper')
+    #         old_source.all().delete()
+    #     else:
+    #         patient.left_upper_upload = True
+    # elif position == 'right_lower':
+    #     if patient.right_lower_upload:
+    #         old_source = patient.teeth_slices.all().filter(slices_position='right_lower')
+    #         old_source.all().delete()
+    #     else:
+    #         patient.right_lower_upload = True
+    # else:
+    #     if patient.right_upper_upload:
+    #         old_source = patient.teeth_slices.all().filter(slices_position='right_upper')
+    #         old_source.all().delete()
+    #     else:
+    #         patient.right_upper_upload = True
+    # if patient.left_lower_upload and patient.left_upper_upload and \
+    #         patient.right_lower_upload and patient.right_upper_upload:
+    #     patient.is_data_upload = True
     new_slices.save()
     patient.teeth_slices.add(new_slices)
     patient.save()
     fs = FileSystemStorage(location=settings.MEDIA_ROOT)
-    subdir = os.path.join(settings.MEDIA_ROOT, patient_id, position)
+    subdir = os.path.join(settings.MEDIA_ROOT, patient_id)
     shutil.rmtree(subdir, ignore_errors=True)
     os.makedirs(subdir, exist_ok=True)
     for file in files:
@@ -278,8 +282,8 @@ def upload_slices(request):
 def download_stl(request):
     data = json.loads(request.body)
     patient_id = data.get('patient_id')
-    position = data.get('position')
-    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/{position}/output.stl')
+    # position = data.get('position')
+    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/output.stl')
     with open(file_path, 'rb') as file:
         response = HttpResponse(file.read(), content_type='application/stl')
         response['Content-Disposition'] = 'attachment; filename="output.stl"'
