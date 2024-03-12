@@ -15,4 +15,5 @@ urlpatterns = [
     path('get_patient_of_doctor', get_patient_of_doctor, name='get_patient_of_doctor'),
     path('upload_slices', upload_slices, name='upload_slices'),
     path('download_stl', download_stl, name='download_stl'),
+    path('download_swc', download_swc, name='download_swc'),
 ]

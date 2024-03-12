@@ -1,8 +1,12 @@
 import base64
 import json
 import os
+import io
 import shutil
+import tempfile
 
+import skeletor as sk
+import trimesh as tm
 from django.utils.timezone import now
 from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
@@ -238,33 +242,6 @@ def upload_slices(request):
         patient.teeth_slices.all().delete()
     else:
         patient.is_data_upload = True
-    # if position == 'left_lower':
-    #     if patient.left_lower_upload:
-    #         old_source = patient.teeth_slices.all().filter(slices_position='left_lower')
-    #         old_source.all().delete()
-    #     else:
-    #         patient.left_lower_upload = True
-    # elif position == 'left_upper':
-    #     if patient.left_upper_upload:
-    #         old_source = patient.teeth_slices.all().filter(slices_position='left_upper')
-    #         old_source.all().delete()
-    #     else:
-    #         patient.left_upper_upload = True
-    # elif position == 'right_lower':
-    #     if patient.right_lower_upload:
-    #         old_source = patient.teeth_slices.all().filter(slices_position='right_lower')
-    #         old_source.all().delete()
-    #     else:
-    #         patient.right_lower_upload = True
-    # else:
-    #     if patient.right_upper_upload:
-    #         old_source = patient.teeth_slices.all().filter(slices_position='right_upper')
-    #         old_source.all().delete()
-    #     else:
-    #         patient.right_upper_upload = True
-    # if patient.left_lower_upload and patient.left_upper_upload and \
-    #         patient.right_lower_upload and patient.right_upper_upload:
-    #     patient.is_data_upload = True
     new_slices.save()
     patient.teeth_slices.add(new_slices)
     patient.save()
@@ -283,8 +260,39 @@ def download_stl(request):
     data = json.loads(request.body)
     patient_id = data.get('patient_id')
     # position = data.get('position')
-    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/output.stl')
+    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/output1.stl')
     with open(file_path, 'rb') as file:
         response = HttpResponse(file.read(), content_type='application/stl')
         response['Content-Disposition'] = 'attachment; filename="output.stl"'
         return response
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def download_swc(request):
+    data = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    teeth_num = data.get('teeth_num')
+
+    mesh = tm.load(os.path.join(settings.BASE_DIR, f'model/{patient_id}/output{teeth_num}.stl'))
+    fixed = sk.pre.fix_mesh(mesh, remove_disconnected=800, inplace=False)
+    skel = fixed
+    _skel = sk.skeletonize.by_wavefront(skel, waves=1, step_size=10, radius_agg="mean")
+    sk.post.radii(_skel,
+                  mesh=None,
+                  method='ray',
+                  aggregate='max',
+                  validate=True, )
+    sk.post.clean_up(_skel, validate=True, inplace=True)
+    _skel.save_swc(os.path.join(settings.BASE_DIR, f'model/{patient_id}/output{teeth_num}.swc'))
+
+    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/output{teeth_num}.swc')
+    # with open(file_path, 'rb') as file:
+    #     response = HttpResponse(file.read(), content_type='application/stl')
+    #     response['Content-Disposition'] = f'attachment; filename="output{teeth_num}.swc"'
+    #     return response
+    with open(file_path, 'r') as file:
+        swc_content = file.read()
+    response = HttpResponse(swc_content, content_type='text/plain')
+    return response
+
