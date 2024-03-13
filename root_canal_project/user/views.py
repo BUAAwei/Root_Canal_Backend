@@ -259,11 +259,11 @@ def upload_slices(request):
 def download_stl(request):
     data = json.loads(request.body)
     patient_id = data.get('patient_id')
-    # position = data.get('position')
-    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/output1.stl')
+    teeth_num = data.get('teeth_num')
+    file_path = os.path.join(settings.BASE_DIR, f'model/{patient_id}/output{teeth_num}.stl')
     with open(file_path, 'rb') as file:
         response = HttpResponse(file.read(), content_type='application/stl')
-        response['Content-Disposition'] = 'attachment; filename="output.stl"'
+        response['Content-Disposition'] = f'attachment; filename="output{teeth_num}.stl"'
         return response
 
 
