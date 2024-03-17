@@ -11,6 +11,7 @@ urlpatterns = [
     path('make_doctor_admin', make_doctor_admin, name='make_doctor_admin'),
     path('create_patient', create_patient, name='create_patient'),
     path('delete_patient', delete_patient, name='delete_patient'),
+    path('get_patient_with_name', get_patient_with_name, name='get_patient_with_name'),
     path('get_all_patient', get_all_patient, name='get_all_patient'),
     path('get_patient_of_doctor', get_patient_of_doctor, name='get_patient_of_doctor'),
     path('upload_slices', upload_slices, name='upload_slices'),

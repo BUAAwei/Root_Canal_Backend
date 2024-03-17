@@ -14,6 +14,9 @@ class Doctor(Model):
 class Patient(Model):
     patient_id = AutoField(primary_key=True)
     patient_name = CharField(max_length=100, null=True)
+    patient_age = CharField(max_length=100, null=True)
+    register_time = DateTimeField(null=True, default=None)
+    patient_phone = CharField(max_length=100, null=True)
     description = CharField(max_length=100, null=True)
     is_data_upload = BooleanField(default=False)
     teeth_slices = ManyToManyField('Slices')

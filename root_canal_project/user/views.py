@@ -169,8 +169,11 @@ def create_patient(request):
     doctor_id = data.get('doctor_id')
     doctor = Doctor.objects.get(doctor_id=doctor_id)
     patient_name = data.get('patient_name')
+    patient_age = data.get('patient_age')
+    patient_phone = data.get('patient_phone')
     patient_description = data.get('patient_description')
-    new_patient = Patient.objects.create(patient_name=patient_name, description=patient_description)
+    new_patient = Patient.objects.create(patient_name=patient_name, description=patient_description,
+                                         patient_age=patient_age, patient_phone=patient_phone, register_time=now())
     new_patient.save()
     doctor.special_treat_patients.add(new_patient)
     return JsonResponse({'msg': f"已向{doctor.doctor_name}医生的病人列表添加{new_patient.patient_name}病人"})
@@ -189,6 +192,27 @@ def delete_patient(request):
 
 @csrf_exempt
 @require_http_methods(['POST'])
+def get_patient_with_name(request):
+    data = json.loads(request.body)
+    patient_name = data.get('patient_name')
+    patients = Patient.objects.filter(patient_name=patient_name)
+    patients_info = []
+    for patient in patients:
+        patient_info = {
+            "patient_id": patient.patient_id,
+            "patient_name": patient.patient_name,
+            "patient_age": patient.patient_age,
+            "patient_phone": patient.patient_phone,
+            "description": patient.description,
+            "is_upload": patient.is_data_upload,
+            "register_time": patient.register_time
+        }
+        patients_info.append(patient_info)
+    return JsonResponse({'patients_info': patients_info})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
 def get_all_patient(request):
     patients = Patient.objects.all()
     patients_info = []
@@ -196,12 +220,11 @@ def get_all_patient(request):
         patient_info = {
             "patient_id": patient.patient_id,
             "patient_name": patient.patient_name,
+            "patient_age": patient.patient_age,
+            "patient_phone": patient.patient_phone,
             "description": patient.description,
-            # "left_lower_upload": patient.left_lower_upload,
-            # "right_lower_upload": patient.right_lower_upload,
-            # "left_upper_upload": patient.left_upper_upload,
-            # "right_upper_upload": patient.right_upper_upload,
-            "is_upload": patient.is_data_upload
+            "is_upload": patient.is_data_upload,
+            "register_time": patient.register_time
         }
         patients_info.append(patient_info)
     return JsonResponse({'patients_info': patients_info})
@@ -219,12 +242,11 @@ def get_patient_of_doctor(request):
         patient_info = {
             "patient_id": patient.patient_id,
             "patient_name": patient.patient_name,
+            "patient_age": patient.patient_age,
+            "patient_phone": patient.patient_phone,
             "description": patient.description,
-            # "left_lower_upload": patient.left_lower_upload,
-            # "right_lower_upload": patient.right_lower_upload,
-            # "left_upper_upload": patient.left_upper_upload,
-            # "right_upper_upload": patient.right_upper_upload,
-            "is_upload": patient.is_data_upload
+            "is_upload": patient.is_data_upload,
+            "register_time": patient.register_time
         }
         patients_info.append(patient_info)
     return JsonResponse({'patients_info': patients_info})
