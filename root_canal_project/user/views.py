@@ -173,7 +173,8 @@ def create_patient(request):
     patient_phone = data.get('patient_phone')
     patient_description = data.get('patient_description')
     new_patient = Patient.objects.create(patient_name=patient_name, description=patient_description,
-                                         patient_age=patient_age, patient_phone=patient_phone, register_time=now())
+                                         patient_age=patient_age, patient_phone=patient_phone, register_time=now(),
+                                         visiting_doctor=doctor.doctor_name)
     new_patient.save()
     doctor.special_treat_patients.add(new_patient)
     return JsonResponse({'msg': f"已向{doctor.doctor_name}医生的病人列表添加{new_patient.patient_name}病人"})
@@ -189,6 +190,66 @@ def delete_patient(request):
     patient.delete()
     return JsonResponse({'msg': f"删除病人{name}成功"})
 
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def edit_diagnostic_opinion(request):
+    data = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    diagnostic_opinion = data.get('diagnostic_opinion')
+    patient = Patient.objects.get(patient_id=patient_id)
+    patient.diagnostic_opinion = diagnostic_opinion
+    patient.diagnose_time = now()
+    patient.save()
+    return JsonResponse({'msg': "修改诊断意见成功"})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def edit_handling_opinion(request):
+    data = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    handling_opinion = data.get('handling_opinion')
+    patient = Patient.objects.get(patient_id=patient_id)
+    patient.handling_opinion = handling_opinion
+    patient.save()
+    return JsonResponse({'msg': "修改处理意见成功"})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def edit_note(request):
+    data = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    note = data.get('note')
+    patient = Patient.objects.get(patient_id=patient_id)
+    patient.note = note
+    patient.save()
+    return JsonResponse({'msg': "修改注意事项成功"})
+
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def get_total_patient_info(request):
+    data = json.loads(request.body)
+    patient_id = data.get('patient_id')
+    patient = Patient.objects.get(patient_id=patient_id)
+    patient_info = {
+        "patient_id": patient.patient_id,
+        "patient_name": patient.patient_name,
+        "patient_age": patient.patient_age,
+        "patient_phone": patient.patient_phone,
+        "classification": patient.classification,
+        "visiting_doctor": patient.visiting_doctor,
+        "description": patient.description,
+        "is_upload": patient.is_data_upload,
+        "register_time": patient.register_time,
+        "diagnose_time": patient.diagnose_time,
+        "diagnostic_opinion": patient.diagnostic_opinion,
+        "handling_opinion": patient.handling_opinion,
+        "note": patient.note
+    }
+    return JsonResponse({'patient_info': patient_info})
 
 @csrf_exempt
 @require_http_methods(['POST'])
